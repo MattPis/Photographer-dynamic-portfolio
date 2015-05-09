@@ -35,6 +35,10 @@
 }
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:YES];
+
+}
+-(void)viewDidLayoutSubviews{
+    [super viewDidLayoutSubviews];
     [self drawShadow];
 
 }

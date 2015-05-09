@@ -25,5 +25,31 @@
     }];
 
 }
+-(void)featurePhotograph{
+    PFObject *object = [PFObject objectWithoutDataWithClassName:@"Photos"
+                                                       objectId:self.ID];
+    object[@"featured"] = @YES;
 
+    [object  saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) {
+            NSLog(@"Featured Saved");
+        } else {
+            NSLog(@"Featured Not Saved");
+        }
+    }];
+}
+-(void)removeFeature{
+    PFObject *object = [PFObject objectWithoutDataWithClassName:@"Photos"
+                                                       objectId:self.ID];
+    object[@"featured"] = @NO;
+
+    [object  saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) {
+            NSLog(@"Featured Removed");
+        } else {
+            NSLog(@"Featured Not Removed");
+        }
+    }];
+
+}
 @end

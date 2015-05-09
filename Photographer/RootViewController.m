@@ -11,37 +11,40 @@
 #import "MenuCell.h"
 #import "GalleryViewController.h"
 #import "AboutViewController.h"
-
-@interface RootViewController ()<UICollectionViewDataSource, UICollectionViewDelegate>
+#import "Photograph.h"
+@interface RootViewController ()
 @property (strong, nonatomic) IBOutlet UIImageView *backgroundImage;
 @property (strong, nonatomic) IBOutlet UICollectionView *menuCollectionView;
 @property (strong, nonatomic) IBOutlet NSLayoutConstraint *collectionViewHeightConstraint;
+@property (strong, nonatomic) IBOutlet UILabel *logoLabel;
 @property BOOL animate;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *portfolioRight;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *aboutRight;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *contactRight;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *blogRight;
+@property (strong, nonatomic) IBOutlet NSLayoutConstraint *logoLeft;
+@property Photograph *photograph;
 @end
 
 @implementation RootViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.backgroundImage.image = self.dataModel.featured.firstObject;
-    featuredIndex = 0;
-    [self setCollectionViewHeight];
-
+    self.logoLeft.constant = 0;
+    self.portfolioRight.constant = 10;
+    self.aboutRight.constant = 10;
+    self.contactRight.constant = 10;
+    self.blogRight.constant = 10;
+    self.photograph = self.dataModel.featured.firstObject;
+    self.backgroundImage.image = self.photograph.image;
 }
--(void)setCollectionViewHeight{
-    if ((self.dataModel.menuItems.count * 40) < self.view.frame.size.height -10) {
-        self.collectionViewHeightConstraint.constant = self.dataModel.menuItems.count * 40;
-    }
-    else {
-        self.collectionViewHeightConstraint.constant = self.view.frame.size.height - 10;
-    }
 
-}
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:YES];
-    [self backgroundImageZoomOut];
-    //[self initialAnimation];
+    featuredIndex = 0;
 
+    [self backgroundImageZoomOut];
+    [self animateButtonsWhenViewDidApper];
 }
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:YES];
@@ -55,6 +58,7 @@
     self.animate = NO;
 
 }
+
 #pragma mark annimations
 -(void)initialAnimation{
     self.collectionViewLeftConstraint.constant = 0;
@@ -63,34 +67,46 @@
     }];
 
 }
+-(void)drawShadow{
+    CALayer *layer = self.logoLabel.layer;
+    layer.shadowOffset = CGSizeMake(5, 5);
+    layer.shadowColor = [[UIColor blackColor] CGColor];
+    layer.shadowRadius = 5.5f;
+    layer.shadowOpacity = 0.60f;
+    layer.masksToBounds = NO;
 
+
+    layer.shadowPath = [[UIBezierPath bezierPathWithRect:layer.bounds] CGPath];
+    
+}
 -(void)backgroundImageZoomOut{
 
     if (self.animate == YES) {
 
-
     self.bottom.constant = 0;
     self.right.constant = -16;
     [UIView animateWithDuration:10 animations:^{[self.view.layer layoutIfNeeded];}completion:^(BOOL finished) {
+        featuredIndex ++;
         [self changeFeaturedPhotoAfterZoomOut];
     }];
     }
 }
 
 -(void)changeFeaturedPhotoAfterZoomOut{
+
     if ((featuredIndex == self.dataModel.featured.count) && (self.animate == YES)) {
         featuredIndex = 0;
         [self changeFeaturedPhotoAfterZoomOut];
     }
     else if (self.animate == YES) {
-        self.backgroundImage.image = [self.dataModel.featured objectAtIndex:featuredIndex];
+        self.photograph = [self.dataModel.featured objectAtIndex:featuredIndex];
 
+        self.backgroundImage.image = self.photograph.image;
         CATransition *transition = [CATransition animation];
         transition.duration = 3.0f;
         transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
         transition.type = kCATransitionFade;
         [self.backgroundImage.layer addAnimation:transition forKey:nil];
-        featuredIndex ++;
         [self backgroundImageZoomIn];
     }
 
@@ -102,6 +118,7 @@
     self.bottom.constant = -40;
     self.right.constant = -56;
     [UIView animateWithDuration:10 animations:^{[self.view layoutIfNeeded];}completion:^(BOOL finished) {
+        featuredIndex ++;
         [self changeFeaturedPhotoAfterZoomIn];
     }];
     }
@@ -112,53 +129,47 @@
         [self changeFeaturedPhotoAfterZoomIn];
     }
     else if (self.animate == YES) {
-    self.backgroundImage.image = [self.dataModel.featured objectAtIndex:featuredIndex];
+        self.photograph = [self.dataModel.featured objectAtIndex:featuredIndex];
 
+        self.backgroundImage.image = self.photograph.image;
     CATransition *transition = [CATransition animation];
     transition.duration = 3.0f;
     transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
     transition.type = kCATransitionFade;
     [self.backgroundImage.layer addAnimation:transition forKey:nil];
-    featuredIndex ++;
     [self backgroundImageZoomOut];
     }
 }
+-(void)animateButtons:(int)portfolio about:(int)about contact:(int)contact blog:(int)blog segueTo:(NSString*)controller{
 
-#pragma mark UICollectionView
+    self.portfolioRight.constant = portfolio;
+    self.aboutRight.constant = about;
+    self.contactRight.constant = contact;
+    self.blogRight.constant = blog;
 
--(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section{
+    [UIView animateWithDuration:.3 animations:^{[self.view layoutIfNeeded];}completion:^(BOOL finished) {
+        [self performSegueWithIdentifier:controller sender:self];
 
-    return self.dataModel.menuItems.count;
+    }];
+
+
 }
--(UICollectionViewCell*)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath{
-    MenuCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"cell" forIndexPath:indexPath];
-    cell.labelName.text = [self.dataModel.menuItems objectAtIndex:indexPath.row];
-
-
-    return cell;
-}
--(void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
-    if (indexPath.row ==0) {
-        [self performSegueWithIdentifier:@"toAbout" sender:nil];
-    }
-    else if (indexPath.row ==1){
-        [self performSegueWithIdentifier:@"toBlog" sender:nil];
-    }
-    else if (indexPath.row ==2){
-        [self performSegueWithIdentifier:@"toContact" sender:nil];
-    }
-    else{
-        collectionViewIndex = (int)indexPath.row;
-        [self performSegueWithIdentifier:@"toGallery" sender:nil];
-    }
-
+-(void)animateButtonsWhenViewDidApper{
+    self.logoLeft.constant = 24;
+    self.portfolioRight.constant = 0;
+    self.aboutRight.constant = 0;
+    self.contactRight.constant = 0;
+    self.blogRight.constant = 0;
+    [UIView animateWithDuration:.3 animations:^{[self.view layoutIfNeeded];}completion:^(BOOL finished) {
+    }];
 }
 #pragma mark navigation methods
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
     if ([[segue identifier] isEqualToString:@"toGallery"]) {
         GalleryViewController *gvc = [segue destinationViewController];
-        self.dataModel.galleryName = [self.dataModel.menuItems objectAtIndex:collectionViewIndex];
+        
         gvc.dataModel = self.dataModel;
+
     }
    else  if ([[segue identifier] isEqualToString:@"toAbout"]) {
        AboutViewController *avc = [segue destinationViewController];
@@ -179,6 +190,23 @@
 
 
 }
+# pragma mark actions
+- (IBAction)portfolioHandler:(UIButton *)sender {
+    [self animateButtons:-10 about:100 contact:100 blog:100 segueTo:@"toGallery"];
+}
+- (IBAction)aboutHandler:(UIButton *)sender {
+    [self animateButtons:100 about:-10 contact:100 blog:100 segueTo:@"toAbout"];
+
+}
+- (IBAction)contactHandler:(UIButton *)sender {
+    [self animateButtons:100 about:100 contact:-10 blog:100 segueTo:@"toContact"];
+
+}
+- (IBAction)blogHandler:(UIButton *)sender {
+    [self animateButtons:100 about:100 contact:100 blog:-10 segueTo:@"toBlog"];
+
+}
+
 -(IBAction)unwindToRoot:(UIStoryboardSegue *)segue {
 }
 

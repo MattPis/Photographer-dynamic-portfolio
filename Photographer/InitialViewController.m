@@ -26,7 +26,6 @@
     self.dataModel.menuItems = galleries;
     featuredCount = number;
 
-
 }
 
 

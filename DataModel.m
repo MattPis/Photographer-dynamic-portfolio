@@ -63,6 +63,7 @@
             self.email = objects.firstObject[@"email"];
             self.website = objects.firstObject[@"website"];
             self.objectId = [[objects objectAtIndex:0] objectId];
+            self.password = objects.firstObject[@"password"];
 
             [self downloadImageWithObject:objects.firstObject withPurpose:@"aboutImage"];
 
@@ -128,7 +129,11 @@
 
        if ([purpose isEqual:@"featured"]) {
 
-           [self.featured addObject:[UIImage imageWithData:data]];
+           Photograph *photograph = [Photograph new];
+           photograph.image = [UIImage imageWithData:data];
+           photograph.atGallery =  object[@"gallery"];
+           photograph.ID = object.objectId;
+           [self.featured addObject:photograph];
            [self.delegate featuredDownloaded];
        }
        else if ([purpose isEqual:@"gallery"]){
@@ -136,7 +141,6 @@
            photograph.image = [UIImage imageWithData:data];
            photograph.atGallery =  object[@"gallery"];
            photograph.ID = object.objectId;
-           NSLog(@"%@",  object.objectId);
            [self.photos addObject:photograph];
            [self.delegate photoDownloaded];
        }
@@ -149,9 +153,10 @@
 }
 
 -(void)saveInfo{
-    PFQuery *query = [PFQuery queryWithClassName:@"Photographers"];
+    PFQuery *querry = [PFQuery queryWithClassName:@"Photographers"];
 
-    [query getObjectInBackgroundWithId:self.objectId block:^(PFObject *object, NSError *error) {
+    // Retrieve the object by id
+    [querry  getObjectInBackgroundWithId:self.objectId block:^(PFObject *object, NSError *error) {
 
         object[@"about"]= self.about;
         object[@"header"]= self.headerAbout;
@@ -161,8 +166,19 @@
         object[@"tel"]= self.tel;
         object[@"email"]= self.email;
         object[@"website"]= self.website;
-        [object saveInBackground];
+        object[@"password"]= self.password;
+
+
+        [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+            if (succeeded) {
+                [self alertMessage:@"Success" message:@"Changes Saved"];
+                [self.delegate photoUploaded];
+            } else {
+                [self alertMessage:@"Error" message:@"Changes not saved"];
+            }
+        }];
     }];
+
 }
 -(void)addGalleryWithName:(NSString *)name{
     PFObject *object = [PFObject objectWithClassName:@"Galleries"];
@@ -207,6 +223,56 @@
     UIAlertView * alertView = [[UIAlertView alloc] initWithTitle:title   message:message delegate:nil cancelButtonTitle:nil otherButtonTitles: @"OK", nil];
     [alertView setAlertViewStyle:UIAlertViewStyleDefault];
     [alertView show];
+
+}
+-(void)addPhoto:(UIImage*)image toGallery:(NSString*)galleryName featured:(BOOL)featured{
+    PFObject *object = [PFObject objectWithClassName:@"Photos"];
+    object[@"gallery"] = galleryName;
+    object[@"photographer"] = self.photographerName;
+    object[@"featured"] = [NSNumber numberWithBool:featured];
+    
+    if (featured) {
+        object[@"featured"] = @YES;
+    }
+    else{
+        object[@"featured"] = @NO;
+
+    }
+    object[@"image"]= [PFFile fileWithData: UIImageJPEGRepresentation(image,1.0)];
+    [object saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        if (succeeded) {
+
+            [self alertMessage:@"Success" message:[NSString stringWithFormat:@"You can upload %d photos more",(100-self.totalNumberOfPhotos)]];
+            [self.delegate photoUploaded];
+
+            Photograph *photo = [Photograph new];
+            photo.image = image;
+            photo.ID = object.objectId;
+            [self.featured addObject:photo];
+
+            } else {
+            [self alertMessage:@"Error" message:@"Photograph not saved"];
+        }
+    }];
+
+}
+-(void)getTotalNumberOfPhotos{
+
+    PFQuery *query = [PFQuery queryWithClassName:@"Photos"];
+    [query whereKey:@"photographer" equalTo:self.photographerName];
+
+    [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+        if (!error) {
+            self.totalNumberOfPhotos = (int)objects.count;
+        }
+
+        else {
+            [self alertMessage:@"Error" message:@"Connection Error"];
+            
+        }
+        
+    }];
+
 
 }
 @end

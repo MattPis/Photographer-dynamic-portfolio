@@ -15,7 +15,7 @@
 -(void)retriveNumberOfPhotos:(int)number;
 -(void)retriveAbout:(NSString*)about;
 -(void)connectionProblem;
-
+-(void)photoUploaded;
 -(void)photoDownloaded;
 @end
 
@@ -38,7 +38,7 @@
 @property NSString *website;
 @property NSString *objectId;
 @property NSString *currentGalleryId;
-
+@property int totalNumberOfPhotos;
 
 
 @property NSString *galleryName;
@@ -51,4 +51,7 @@
 -(void)saveInfo;
 -(void)addGalleryWithName:(NSString*)name;
 -(void)deleteGallery;
+-(void)addPhoto:(UIImage*)image toGallery:(NSString*)galleryName featured:(BOOL)featured;
+-(void)getTotalNumberOfPhotos;
+
 @end

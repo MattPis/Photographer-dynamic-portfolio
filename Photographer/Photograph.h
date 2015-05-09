@@ -12,6 +12,9 @@
 @property UIImage *image;
 @property NSString *ID;
 @property NSString *atGallery;
+@property int number;
 -(void)deletePhotograph;
+-(void)featurePhotograph;
+-(void)removeFeature;
 
 @end

@@ -28,7 +28,6 @@
     self.aboutTextField.scrollEnabled = YES;
     self.header.text = self.dataModel.headerAbout;
     self.imageView.image = self.dataModel.aboutImage;
-    [self drawShadow];
 
 }
 
